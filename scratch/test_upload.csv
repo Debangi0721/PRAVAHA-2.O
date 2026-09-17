@@ -1,0 +1,6 @@
+timestamp,rainfall_mm,rainfall_intensity_mm_hr,rainfall_duration_hr,water_level_m,water_level_rise_rate_m_hr,water_level_acceleration_m_hr2,soil_moisture_percent,saturation_index,elevation_m,distance_from_river_m,vulnerability_level,flood_type,risk_level
+2026-09-01 10:00:00,45.2,32.0,2.5,2.85,0.45,0.12,65.4,0.612,24.5,75.0,HIGH,Rapid-Rise,MEDIUM
+2026-09-01 10:30:00,78.5,55.0,3.0,3.45,0.80,0.25,78.2,0.745,24.5,75.0,HIGH,Rapid-Rise,HIGH
+2026-09-01 11:00:00,120.0,85.0,3.5,4.60,1.15,0.30,92.0,0.890,24.5,75.0,HIGH,Rapid-Rise,CRITICAL
+2026-09-01 11:30:00,140.0,90.0,4.0,5.20,1.20,0.10,95.5,0.940,24.5,75.0,HIGH,Rapid-Rise,CRITICAL
+2026-09-01 12:00:00,110.0,60.0,4.5,5.10,-0.10,-0.15,96.0,0.950,24.5,75.0,HIGH,Rapid-Rise,HIGH

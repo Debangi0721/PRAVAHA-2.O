@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sensora 2.0 | Animated Flood Simulation & Digital Twin</title>
+  <meta name="description" content="AI-Powered Disaster Monitoring Digital Twin with Animated Flood Simulation, Hydrological AI Models, and Household Early Warning System." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/assets/index-yFQEPsTT.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Rof5hQu3.css">
+</head>
+<body>
+  <!-- TOP COMPACT CONTROL ROOM HEADER -->
+  <header class="hud-header">
+    <!-- Brand -->
+    <div class="hud-brand">
+      <div class="brand-badge">
+        <span class="pulse-dot"></span>
+        <span class="brand-code">SENSORA 2.0</span>
+      </div>
+      <div class="brand-divider"></div>
+      <span class="hud-title">FLOOD SIMULATION DIGITAL TWIN</span>
+    </div>
+
+    <!-- Live Telemetry Status Chips -->
+    <div class="hud-telemetry-status">
+      <div class="status-chip" id="chip-system-status">
+        <span class="status-indicator online"></span>
+        <span class="chip-label">SYSTEM:</span>
+        <span class="chip-val" id="sys-status-text">NOMINAL</span>
+      </div>
+      <div class="status-chip" id="chip-warning-level">
+        <span class="status-indicator normal"></span>
+        <span class="chip-label">GLOBAL ALERT:</span>
+        <span class="chip-val bold" id="hud-alert-level">LOW RISK</span>
+      </div>
+    </div>
+
+    <!-- HUD Actions -->
+    <div class="hud-actions">
+      <!-- Scenario Selector -->
+      <div class="scenario-selector-wrap">
+        <label for="scenario-select" class="control-label">SCENARIO:</label>
+        <select id="scenario-select" class="hud-select" aria-label="Select Flood Scenario">
+          <option value="cloudburst" selected>Cloudburst (Sudden Downpour)</option>
+          <option value="rapid_rise">Rapid-Rise (Steep Gradient Surge)</option>
+          <option value="slow_saturation">Slow Saturation (Prolonged Rain)</option>
+          <option value="sudden_upstream">Sudden Upstream (Catchment Inflow)</option>
+        </select>
+      </div>
+
+      <!-- Accessibility / Motion Toggle -->
+      <button id="btn-motion-toggle" class="hud-btn hud-btn-ghost" title="Toggle Reduced Motion">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M10 15V9l6 3-6 3z" />
+        </svg>
+        <span id="motion-label">Motion: Full</span>
+      </button>
+
+      <!-- Audio Mute Toggle -->
+      <button id="btn-audio-toggle" class="hud-btn hud-btn-ghost" title="Toggle Emergency Siren Tone">
+        <svg class="icon" id="audio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <line x1="23" y1="9" x2="17" y2="15" />
+          <line x1="17" y1="9" x2="23" y2="15" />
+        </svg>
+        <span id="audio-label">Siren: Off</span>
+      </button>
+
+      <!-- Dataset Tab Quick Nav Button -->
+      <button id="btn-hud-dataset" class="hud-btn hud-btn-ghost" title="Open Dataset Module">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Dataset (5K)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN BALANCED CONTROL ROOM LAYOUT -->
+  <main class="control-room-layout">
+    <!-- LEFT & CENTER: DIGITAL TWIN SCHEMATIC WORKSPACE -->
+    <section class="viewport-section" aria-label="Digital Twin Schematic Environment">
+      <!-- Viewport Sub-header with Badges & Disclaimer -->
+      <div class="viewport-subbar">
+        <div class="subbar-left">
+          <span class="schematic-disclaimer">SCHEMATIC SIMULATION – NOT TO SCALE</span>
+        </div>
+        <div class="subbar-right">
+          <div class="telemetry-pill" id="badge-rain-sensor">RAIN: <strong>12.0 mm/h</strong></div>
+          <div class="telemetry-pill" id="badge-river-sensor">RIVER: <strong>1.82 m</strong></div>
+          <div class="telemetry-pill" id="badge-soil-sensor">SOIL: <strong>34%</strong></div>
+        </div>
+      </div>
+
+      <!-- DIGITAL TWIN CANVAS / SVG CONTAINER -->
+      <div class="digital-twin-container" id="digital-twin-container">
+        <!-- Background Weather Layer (Canvas for rainfall particles) -->
+        <canvas id="weather-canvas" class="weather-canvas"></canvas>
+
+        <!-- Interactive Vector Schematic SVG (Spacious 1000x560 coordinate space) -->
+        <svg id="schematic-svg" class="schematic-svg" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <!-- Water Flow Gradients -->
+            <linearGradient id="riverGradNormal" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0284c7" stop-opacity="0.85" />
+              <stop offset="50%" stop-color="#0369a1" stop-opacity="0.9" />
+              <stop offset="100%" stop-color="#075985" stop-opacity="0.95" />
+            </linearGradient>
+            <linearGradient id="riverGradFlood" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#b91c1c" stop-opacity="0.9" />
+              <stop offset="50%" stop-color="#c2410c" stop-opacity="0.85" />
+              <stop offset="100%" stop-color="#0369a1" stop-opacity="0.85" />
+            </linearGradient>
+            <!-- Inundation Water Filter -->
+            <filter id="waterGlow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+            <!-- Beacon Pulse Glow -->
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
+              <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <!-- Grid Pattern -->
+            <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.025)" stroke-width="1" />
+            </pattern>
+          </defs>
+
+          <!-- Grid Background Layer -->
+          <rect width="1000" height="560" fill="url(#gridPattern)" />
+
+          <!-- MOUNTAINS & TERRAIN ELEVATION (Vector Contours - Well Spaced) -->
+          <g id="terrain-group">
+            <!-- Mountain Peak 1 (High Topography Left) -->
+            <path class="terrain-mountain" d="M -20,380 L 150,110 L 300,240 L 430,160 L 560,340 Z" fill="#0f172a" stroke="#1e293b" stroke-width="1.5" />
+            <path class="terrain-contour" d="M 30,310 Q 150,150 280,250" fill="none" stroke="rgba(56, 189, 248, 0.12)" stroke-width="1" stroke-dasharray="4,4" />
+            
+            <!-- Mountain Peak 2 (Upstream Ridge Center) -->
+            <path class="terrain-mountain" d="M 360,320 L 510,95 L 670,230 L 800,130 L 960,330 Z" fill="#0c1424" stroke="#1e293b" stroke-width="1.5" />
+            <path class="terrain-contour" d="M 410,260 Q 520,140 640,240" fill="none" stroke="rgba(56, 189, 248, 0.12)" stroke-width="1" stroke-dasharray="4,4" />
+
+            <!-- Elevation Contour Labels (Placed safely away from sensor stations) -->
+            <text x="150" y="95" class="contour-text" text-anchor="middle">+450m Peak</text>
+            <text x="510" y="80" class="contour-text" text-anchor="middle">+580m Ridge</text>
+            <text x="790" y="115" class="contour-text" text-anchor="middle">+410m Ridge</text>
+
+            <!-- Valley Ground & Soil Layer -->
+            <path id="soil-ground-layer" class="ground-layer" d="M 0,330 Q 250,300 500,330 T 1000,320 L 1000,560 L 0,560 Z" fill="#090f1d" stroke="#1e293b" stroke-width="1" />
+
+            <!-- Soil Moisture Heatmap Saturation Overlay -->
+            <path id="soil-moisture-overlay" class="soil-saturation-heat" d="M 0,330 Q 250,300 500,330 T 1000,320 L 1000,560 L 0,560 Z" fill="#3b82f6" opacity="0.08" />
+          </g>
+
+          <!-- INUNDATION / FLOOD EXPANSION ZONE (Rises smoothly during flood) -->
+          <g id="flood-inundation-group">
+            <path id="flood-plain-zone" class="flood-plain-polygon" d="M 0,400 Q 220,370 440,390 T 780,380 T 1000,395 L 1000,510 Q 750,530 480,520 T 0,525 Z" fill="#0284c7" opacity="0" filter="url(#waterGlow)" />
+            <path id="flood-hazard-outline" class="flood-hazard-line" d="M 0,395 Q 220,365 440,385 T 780,375 T 1000,390" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,4" opacity="0" />
+          </g>
+
+          <!-- RIVER CHANNEL & FLOW SYSTEM -->
+          <g id="river-system-group">
+            <!-- River Bed Base -->
+            <path id="river-bed" d="M 0,430 C 180,410 300,480 490,450 C 690,420 800,485 1000,455 L 1000,515 C 800,540 680,485 490,510 C 300,535 180,480 0,495 Z" fill="#021a30" />
+            
+            <!-- Dynamic Flowing River Water Body -->
+            <path id="river-water" class="river-water" d="M 0,434 C 180,414 300,482 490,453 C 690,423 800,487 1000,458 L 1000,511 C 800,536 680,482 490,507 C 300,531 180,477 0,491 Z" fill="url(#riverGradNormal)" />
+
+            <!-- River Flow Direction Vectors & Ripple Paths -->
+            <g id="river-flow-vectors" class="river-flow-particles">
+              <path class="flow-vector f1" d="M 80,455 Q 170,440 240,470" stroke="rgba(255,255,255,0.4)" stroke-width="1.8" fill="none" stroke-dasharray="12,8" />
+              <path class="flow-vector f2" d="M 350,475 Q 450,455 540,470" stroke="rgba(255,255,255,0.4)" stroke-width="1.8" fill="none" stroke-dasharray="12,8" />
+              <path class="flow-vector f3" d="M 680,450 Q 780,475 870,465" stroke="rgba(255,255,255,0.4)" stroke-width="1.8" fill="none" stroke-dasharray="12,8" />
+            </g>
+
+            <!-- River Flow Rate & Depth Tag (Positioned cleanly at bottom left channel) -->
+            <g id="river-telemetry-tag" transform="translate(340, 530)">
+              <rect x="-75" y="-11" width="150" height="22" rx="11" fill="rgba(15,23,42,0.9)" stroke="#0284c7" stroke-width="1" />
+              <text x="0" y="4" text-anchor="middle" class="river-tag-text" id="svg-river-depth-text">LEVEL: 1.82m | 1.2 m³/s</text>
+            </g>
+          </g>
+
+          <!-- FIELD SENSOR TELEMETRY STATIONS (Spaced distinctly) -->
+          <g id="sensor-stations-group">
+            <!-- 1. Rain Gauge Station (Mountain Slope, Upstream Left) -->
+            <g class="sensor-station" id="svg-station-rain" transform="translate(170, 220)" data-sensor="rain">
+              <circle cx="0" cy="0" r="12" fill="#0f172a" stroke="#0ea5e9" stroke-width="2" />
+              <circle cx="0" cy="0" r="4.5" fill="#0ea5e9" id="sensor-rain-led" class="sensor-led-glow" />
+              <line x1="0" y1="12" x2="0" y2="24" stroke="#0ea5e9" stroke-width="2" />
+              <circle cx="0" cy="24" r="2.5" fill="#0ea5e9" />
+              <circle cx="0" cy="0" r="20" fill="none" stroke="#0ea5e9" stroke-width="1" class="pulse-ring" />
+              <rect x="-50" y="-30" width="100" height="18" rx="4" fill="rgba(15,23,42,0.92)" stroke="#38bdf8" stroke-width="0.8" />
+              <text x="0" y="-18" text-anchor="middle" class="sensor-label">RG-01 RAIN GAUGE</text>
+            </g>
+
+            <!-- 2. Ultrasonic Water Level Radar (River Bank Center) -->
+            <g class="sensor-station" id="svg-station-water" transform="translate(390, 395)" data-sensor="water">
+              <line x1="0" y1="0" x2="0" y2="45" stroke="#38bdf8" stroke-width="2.5" />
+              <rect x="-12" y="0" width="24" height="24" rx="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2" />
+              <circle cx="0" cy="12" r="4.5" fill="#22c55e" id="sensor-water-led" class="sensor-led-glow" />
+              <circle cx="0" cy="12" r="16" fill="none" stroke="#22c55e" stroke-width="1" class="pulse-ring" />
+              <line x1="-4" y1="28" x2="4" y2="28" stroke="#e2e8f0" stroke-width="1.5" />
+              <line x1="-7" y1="36" x2="7" y2="36" stroke="#e2e8f0" stroke-width="1.5" />
+              <rect x="-50" y="-24" width="100" height="18" rx="4" fill="rgba(15,23,42,0.92)" stroke="#38bdf8" stroke-width="0.8" />
+              <text x="0" y="-12" text-anchor="middle" class="sensor-label">WL-02 RIVER RADAR</text>
+            </g>
+
+            <!-- 3. Soil Saturation Probe (Plains Right, Clear from houses) -->
+            <g class="sensor-station" id="svg-station-soil" transform="translate(730, 270)" data-sensor="soil">
+              <polygon points="0,-10 10,10 -10,10" fill="#0f172a" stroke="#f59e0b" stroke-width="2" />
+              <circle cx="0" cy="3" r="3.5" fill="#22c55e" id="sensor-soil-led" class="sensor-led-glow" />
+              <circle cx="0" cy="3" r="15" fill="none" stroke="#22c55e" stroke-width="1" class="pulse-ring" />
+              <line x1="0" y1="10" x2="0" y2="22" stroke="#f59e0b" stroke-width="2" />
+              <rect x="-48" y="-30" width="96" height="18" rx="4" fill="rgba(15,23,42,0.92)" stroke="#f59e0b" stroke-width="0.8" />
+              <text x="0" y="-18" text-anchor="middle" class="sensor-label">SM-03 SOIL PROBE</text>
+            </g>
+          </g>
+
+          <!-- 5 HOUSEHOLDS (H001 TO H005) - Wide & Non-colliding Placement -->
+          <g id="households-group">
+            <!-- Household H001: Riverside East (Low Elevation) -->
+            <g class="household-pin" id="house-H001" transform="translate(100, 390)" data-id="H001" tabindex="0" role="button" aria-label="Household H001 Riverside">
+              <path class="house-roof" d="M -13,-5 L 0,-15 L 13,-5 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <rect class="house-body" x="-11" y="-5" width="22" height="15" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="0" cy="-21" r="6" class="house-risk-dot dot-low" id="house-dot-H001" />
+              <text x="0" y="-30" class="house-tag" text-anchor="middle">H001</text>
+            </g>
+
+            <!-- Household H002: Lower Meadow -->
+            <g class="household-pin" id="house-H002" transform="translate(250, 415)" data-id="H002" tabindex="0" role="button" aria-label="Household H002 Lower Meadow">
+              <path class="house-roof" d="M -13,-5 L 0,-15 L 13,-5 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <rect class="house-body" x="-11" y="-5" width="22" height="15" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="0" cy="-21" r="6" class="house-risk-dot dot-low" id="house-dot-H002" />
+              <text x="0" y="-30" class="house-tag" text-anchor="middle">H002</text>
+            </g>
+
+            <!-- Household H003: South Bank (Downstream) -->
+            <g class="household-pin" id="house-H003" transform="translate(560, 520)" data-id="H003" tabindex="0" role="button" aria-label="Household H003 South Bank">
+              <path class="house-roof" d="M -13,-5 L 0,-15 L 13,-5 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <rect class="house-body" x="-11" y="-5" width="22" height="15" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="0" cy="-21" r="6" class="house-risk-dot dot-low" id="house-dot-H003" />
+              <text x="0" y="-30" class="house-tag" text-anchor="middle">H003</text>
+            </g>
+
+            <!-- Household H004: Mid Ridge -->
+            <g class="household-pin" id="house-H004" transform="translate(630, 380)" data-id="H004" tabindex="0" role="button" aria-label="Household H004 Mid Ridge">
+              <path class="house-roof" d="M -13,-5 L 0,-15 L 13,-5 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <rect class="house-body" x="-11" y="-5" width="22" height="15" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="0" cy="-21" r="6" class="house-risk-dot dot-low" id="house-dot-H004" />
+              <text x="0" y="-30" class="house-tag" text-anchor="middle">H004</text>
+            </g>
+
+            <!-- Household H005: Hillside Road (High Elevation) -->
+            <g class="household-pin" id="house-H005" transform="translate(840, 360)" data-id="H005" tabindex="0" role="button" aria-label="Household H005 Hillside Road">
+              <path class="house-roof" d="M -13,-5 L 0,-15 L 13,-5 Z" fill="#334155" stroke="#94a3b8" stroke-width="1.5" />
+              <rect class="house-body" x="-11" y="-5" width="22" height="15" fill="#1e293b" stroke="#94a3b8" stroke-width="1.5" />
+              <circle cx="0" cy="-21" r="6" class="house-risk-dot dot-low" id="house-dot-H005" />
+              <text x="0" y="-30" class="house-tag" text-anchor="middle">H005</text>
+            </g>
+          </g>
+
+          <!-- EVACUATION SAFE ZONE & GUIDANCE ARROWS -->
+          <g id="evacuation-group">
+            <!-- High Ground Safe Area (Shelter Alpha) -->
+            <g class="safe-zone-marker" id="safe-shelter-alpha" transform="translate(890, 140)">
+              <circle cx="0" cy="0" r="38" fill="rgba(34, 197, 94, 0.08)" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="5,4" class="safe-pulse-perimeter" />
+              <rect x="-20" y="-15" width="40" height="30" rx="5" fill="#0c2419" stroke="#22c55e" stroke-width="1.8" />
+              <path d="M 0,-8 L 0,8 M -8,0 L 8,0" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" />
+              <!-- Safe Area Label -->
+              <rect x="-58" y="20" width="116" height="20" rx="4" fill="rgba(15,23,42,0.92)" stroke="#22c55e" stroke-width="0.8" />
+              <text x="0" y="34" text-anchor="middle" class="safe-zone-text">SAFE SHELTER ALPHA</text>
+            </g>
+
+            <!-- Animated Evacuation Route Paths -->
+            <g id="evacuation-routes" class="evac-routes-layer" opacity="0">
+              <!-- Route from H001 -> Safe Area -->
+              <path id="route-H001" class="evac-path" d="M 100,380 C 160,280 380,200 850,150" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="9,7" />
+              <!-- Route from H002 -> Safe Area -->
+              <path id="route-H002" class="evac-path" d="M 250,405 C 360,290 580,180 850,150" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="9,7" />
+              <!-- Route from H003 -> Safe Area -->
+              <path id="route-H003" class="evac-path" d="M 560,510 C 680,410 790,260 860,170" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="9,7" />
+            </g>
+          </g>
+
+          <!-- CONTROL ROOM DATA TRANSMISSION BUS OVERLAY -->
+          <g id="telemetry-bus-lines">
+            <path id="bus-line-rain" class="telemetry-bus" d="M 170,220 L 500,45" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.2" stroke-dasharray="4,4" />
+            <path id="bus-line-water" class="telemetry-bus" d="M 390,395 L 500,45" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.2" stroke-dasharray="4,4" />
+            <path id="bus-line-soil" class="telemetry-bus" d="M 730,270 L 500,45" fill="none" stroke="rgba(14, 165, 233, 0.25)" stroke-width="1.2" stroke-dasharray="4,4" />
+
+            <circle id="packet-rain" class="data-packet" r="4" fill="#38bdf8" filter="url(#glow)" />
+            <circle id="packet-water" class="data-packet" r="4" fill="#22c55e" filter="url(#glow)" />
+            <circle id="packet-soil" class="data-packet" r="4" fill="#f59e0b" filter="url(#glow)" />
+
+            <!-- Central Hub Gateway Indicator (Placed cleanly at top center) -->
+            <g transform="translate(500, 45)" id="gateway-hub">
+              <circle cx="0" cy="0" r="14" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+              <circle cx="0" cy="0" r="4" fill="#38bdf8" class="hub-pulse" />
+              <text x="0" y="-18" text-anchor="middle" class="sensor-label">IOT GATEWAY</text>
+            </g>
+          </g>
+        </svg>
+
+        <!-- FLOATING HOUSEHOLD DETAIL CARD -->
+        <div class="household-popover" id="household-card" hidden>
+          <div class="popover-header">
+            <span class="popover-title" id="pop-house-title">Household H001</span>
+            <button id="pop-close-btn" class="pop-close">&times;</button>
+          </div>
+          <div class="popover-body">
+            <div class="pop-stat"><span class="label">Elevation:</span> <span class="val" id="pop-elev">2.1 m</span></div>
+            <div class="pop-stat"><span class="label">Distance to River:</span> <span class="val" id="pop-dist">45 m</span></div>
+            <div class="pop-stat"><span class="label">Vulnerability:</span> <span class="val" id="pop-vuln">High</span></div>
+            <div class="pop-stat"><span class="label">Risk Index:</span> <span class="val bold" id="pop-risk">NORMAL</span></div>
+            <div class="pop-stat"><span class="label">Evacuation Status:</span> <span class="val" id="pop-evac">STANDBY</span></div>
+          </div>
+        </div>
+
+        <!-- EMERGENCY FLOOD WARNING BROADCAST OVERLAY -->
+        <div class="emergency-alert-panel" id="emergency-alert-panel" hidden>
+          <div class="alert-banner-header">
+            <div class="alert-icon-wrap">
+              <span class="alert-siren-ring"></span>
+              <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div class="alert-title-group">
+              <span class="alert-tag" id="alert-badge-type">⚠ OFFICIAL FLOOD WARNING</span>
+              <h2 class="alert-headline" id="alert-headline-text">CRITICAL INUNDATION THREAT DETECTED</h2>
+            </div>
+            <button id="btn-dismiss-alert" class="alert-dismiss" title="Minimize Alert">&times;</button>
+          </div>
+
+          <div class="alert-grid-details">
+            <div class="alert-detail-item">
+              <span class="k">CLASSIFIED FLOOD TYPE:</span>
+              <span class="v bold highlight-amber" id="alert-flood-type-val">RAPID-RISE INUNDATION</span>
+            </div>
+            <div class="alert-detail-item">
+              <span class="k">SYSTEM RISK LEVEL:</span>
+              <span class="v bold highlight-red" id="alert-risk-level-val">CRITICAL (SCORE 88/100)</span>
+            </div>
+            <div class="alert-detail-item full-width">
+              <span class="k">MANDATORY DIRECTIVE:</span>
+              <span class="v bold" id="alert-directive-text">IMMEDIATELY EVACUATE LOWLAND SETTLEMENTS TO SHELTER ALPHA (+480m).</span>
+            </div>
+          </div>
+
+          <!-- Simulated Emergency Dispatch Pipeline -->
+          <div class="simulated-dispatch-box">
+            <span class="dispatch-title">SIMULATED EARLY WARNING DISPATCH PIPELINE:</span>
+            <div class="dispatch-checklist">
+              <div class="dispatch-item done" id="disp-sms">
+                <span class="check-icon">✓</span>
+                <span class="disp-text">CELL BROADCAST & SMS DISPATCHED (42 Households)</span>
+              </div>
+              <div class="dispatch-item done" id="disp-voice">
+                <span class="check-icon">✓</span>
+                <span class="disp-text">AUTOMATED VOICE ALERT IVR CALLS INITIATED</span>
+              </div>
+              <div class="dispatch-item done" id="disp-siren">
+                <span class="check-icon">✓</span>
+                <span class="disp-text">LOCAL VALLEY ACOUSTIC SIREN ACTIVATED</span>
+              </div>
+              <div class="dispatch-item done" id="disp-dispatch">
+                <span class="check-icon">✓</span>
+                <span class="disp-text">DISTRICT CONTROL ROOM & RESCUE ALERTED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIMELINE & PLAYBACK CONTROL BAR (Spacious & Clean) -->
+      <div class="simulation-timeline-tray">
+        <div class="playback-actions">
+          <button id="btn-play-pause" class="btn-ctrl primary" title="Play / Pause Simulation (Space)">
+            <svg class="icon" id="play-icon" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span id="play-btn-text">START SIMULATION</span>
+          </button>
+          <button id="btn-restart" class="btn-ctrl" title="Restart to Normal (R)">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 4v6h6M23 20v-6h-6" />
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" />
+            </svg>
+            <span>Restart</span>
+          </button>
+          <button id="btn-step-prev" class="btn-ctrl" title="Step Previous (Left Arrow)">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="19 20 9 12 19 4 19 20" />
+              <line x1="5" y1="19" x2="5" y2="5" />
+            </svg>
+            <span>Prev</span>
+          </button>
+          <button id="btn-step-next" class="btn-ctrl" title="Step Next (Right Arrow)">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 4 15 12 5 20 5 4" />
+              <line x1="19" y1="5" x2="19" y2="19" />
+            </svg>
+            <span>Step</span>
+          </button>
+
+          <!-- Speed Multipliers -->
+          <div class="speed-control">
+            <span class="speed-label">SPEED:</span>
+            <div class="speed-buttons">
+              <button class="btn-speed" data-speed="0.5">0.5x</button>
+              <button class="btn-speed active" data-speed="1">1x</button>
+              <button class="btn-speed" data-speed="2">2x</button>
+              <button class="btn-speed" data-speed="4">4x</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Stage Interactive Stepper -->
+        <div class="timeline-stepper" id="timeline-stepper">
+          <div class="timeline-bar-bg">
+            <div class="timeline-bar-progress" id="timeline-bar-fill"></div>
+          </div>
+          <div class="timeline-steps-container">
+            <button class="timeline-step active" data-stage="0" id="step-node-0">
+              <span class="step-bullet">1</span>
+              <span class="step-text">NORMAL</span>
+            </button>
+            <button class="timeline-step" data-stage="1" id="step-node-1">
+              <span class="step-bullet">2</span>
+              <span class="step-text">RAIN INCREASE</span>
+            </button>
+            <button class="timeline-step" data-stage="2" id="step-node-2">
+              <span class="step-bullet">3</span>
+              <span class="step-text">WATER RISING</span>
+            </button>
+            <button class="timeline-step" data-stage="3" id="step-node-3">
+              <span class="step-bullet">4</span>
+              <span class="step-text">FLOOD DETECTED</span>
+            </button>
+            <button class="timeline-step" data-stage="4" id="step-node-4">
+              <span class="step-bullet">5</span>
+              <span class="step-text">RISK PREDICTED</span>
+            </button>
+            <button class="timeline-step" data-stage="5" id="step-node-5">
+              <span class="step-bullet">6</span>
+              <span class="step-text">ALERT ISSUED</span>
+            </button>
+            <button class="timeline-step" data-stage="6" id="step-node-6">
+              <span class="step-bullet">7</span>
+              <span class="step-text">EVACUATION</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: TABBED PROFESSIONAL CONTROL CONSOLE -->
+    <aside class="control-panel-aside" aria-label="AI Pipeline and Telemetry Control">
+      <!-- Top Navigation Tabs (Eliminates congestion & vertical scrolling!) -->
+      <nav class="console-tab-nav" role="tablist">
+        <button class="console-tab-btn active" data-tab="tab-ai" role="tab" aria-selected="true">
+          <span>🧠 AI MODELS</span>
+        </button>
+        <button class="console-tab-btn" data-tab="tab-charts" role="tab" aria-selected="false">
+          <span>📊 CHARTS</span>
+        </button>
+        <button class="console-tab-btn" data-tab="tab-households" role="tab" aria-selected="false">
+          <span>🏡 HOMES (5)</span>
+        </button>
+        <button class="console-tab-btn" data-tab="tab-dataset" role="tab" aria-selected="false">
+          <span>📁 DATASET</span>
+        </button>
+      </nav>
+
+      <!-- TAB 1: AI PIPELINE & MODELS -->
+      <div class="console-tab-pane active" id="tab-ai" role="tabpanel">
+
+        <!-- 2. AI REASONING / PROCESSING ANIMATION CONSOLE -->
+        <div class="card-dock ai-console-card">
+          <div class="card-dock-header">
+            <span class="card-title">AI INFERENCE & REASONING ENGINE</span>
+            <button id="btn-skip-ai" class="btn-micro" title="Instantly complete current inference stage">SKIP / FAST FORWARD</button>
+          </div>
+          <div class="ai-stages-feed" id="ai-stages-feed">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- 3. MODEL 1 & MODEL 2 OUTPUT RESULTS -->
+        <div class="card-dock models-output-card">
+          <div class="models-grid">
+            <!-- MODEL 1: FLOOD CLASSIFICATION -->
+            <div class="model-box" id="box-model1">
+              <div class="model-box-header">
+                <span class="model-box-name">MODEL 1: FLOOD TYPE</span>
+                <span class="model-tech-pill">Random Forest</span>
+              </div>
+              <div class="model-state-container">
+                <div class="analyzing-pill" id="m1-analyzing-pill">
+                  <span class="dot-spinner"></span>
+                  <span>MONITORING...</span>
+                </div>
+                <div class="result-pill" id="m1-result-pill" hidden>
+                  <span class="result-badge-type" id="m1-flood-type-text">CLOUDBURST</span>
+                  <div class="confidence-gauge">
+                    <span class="conf-label">Confidence:</span>
+                    <span class="conf-val" id="m1-confidence-val">96.8%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MODEL 2: RISK LEVEL & PROBABILITY -->
+            <div class="model-box" id="box-model2">
+              <div class="model-box-header">
+                <span class="model-box-name">MODEL 2: RISK PREDICTION</span>
+                <span class="model-tech-pill">Random Forest</span>
+              </div>
+              <div class="risk-gauge-wrap">
+                <svg class="risk-gauge-svg" viewBox="0 0 160 95">
+                  <path d="M 20 85 A 60 60 0 0 1 140 85" fill="none" stroke="#1e293b" stroke-width="14" stroke-linecap="round" />
+                  <path id="gauge-meter-fill" d="M 20 85 A 60 60 0 0 1 140 85" fill="none" stroke="#22c55e" stroke-width="14" stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="188" />
+                  <text x="80" y="70" text-anchor="middle" class="gauge-score-val" id="gauge-score-text">--%</text>
+                  <text x="80" y="85" text-anchor="middle" class="gauge-score-max">PROBABILITY</text>
+                </svg>
+                <div class="risk-tier-badge tier-low" id="gauge-tier-badge">
+                  Risk Level: <span id="m2-risk-level-val">LOW</span>
+                </div>
+                <div class="confidence-gauge" id="m2-prob-container" style="margin-top: 4px;">
+                  <span class="conf-label">Risk Probability:</span>
+                  <span class="conf-val" id="m2-probability-val">--%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. CONTROL ROOM DASHBOARD -->
+        <div class="card-dock control-room-dashboard" id="control-room-dashboard">
+          <div class="card-dock-header">
+            <span class="card-title">CONTROL ROOM DASHBOARD</span>
+            <span class="telemetry-live-badge">LIVE</span>
+          </div>
+
+          <div class="dashboard-stat-grid">
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Current rainfall</span>
+              <span class="dashboard-value" id="dashboard-rainfall">--</span>
+            </div>
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Water level</span>
+              <span class="dashboard-value" id="dashboard-water-level">--</span>
+            </div>
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Flood type</span>
+              <span class="dashboard-value" id="dashboard-flood-type">--</span>
+            </div>
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Risk level</span>
+              <span class="dashboard-value" id="dashboard-risk-level">--</span>
+            </div>
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Household risk</span>
+              <span class="dashboard-value" id="dashboard-household-risk">--</span>
+            </div>
+            <div class="dashboard-stat">
+              <span class="dashboard-label">Current warning</span>
+              <span class="dashboard-value" id="dashboard-warning">--</span>
+            </div>
+            <div class="dashboard-stat full-width">
+              <span class="dashboard-label">Prediction time</span>
+              <span class="dashboard-value" id="dashboard-prediction-time">--</span>
+            </div>
+          </div>
+
+          <div class="dashboard-history-wrap">
+            <div class="dashboard-history-header">Last 5 prediction events</div>
+            <table class="dashboard-history-table">
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Level</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-history-body">
+                <tr><td colspan="3">No events yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 5. HOUSEHOLD-LEVEL RISK MODULE (TAB 1 DOCKED CARD) -->
+        <div class="card-dock household-risk-card" id="household-risk-module-tab1">
+          <div class="card-dock-header">
+            <span class="card-title">HOUSEHOLD-LEVEL RISK MODULE</span>
+            <span class="household-risk-badge-tag">MODEL 2 + HOUSEHOLD INPUTS</span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="hr-presets-bar">
+            <span class="hr-presets-label">LOCALITY PRESET:</span>
+            <div class="hr-pills-wrap">
+              <button class="hr-preset-pill" data-house-id="H001">H001 (45m, 2.1m)</button>
+              <button class="hr-preset-pill active" data-house-id="H002">H002 (85m, 3.4m)</button>
+              <button class="hr-preset-pill" data-house-id="H003">H003 (140m, 4.8m)</button>
+              <button class="hr-preset-pill" data-house-id="H004">H004 (220m, 7.2m)</button>
+              <button class="hr-preset-pill" data-house-id="H005">H005 (360m, 12.8m)</button>
+              <button class="hr-preset-pill" data-house-id="custom">Custom</button>
+            </div>
+          </div>
+
+          <!-- Household Inputs -->
+          <div class="hr-inputs-grid">
+            <!-- Input 1: Distance from river -->
+            <div class="hr-input-group">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-dist-t1">Distance from river:</label>
+                <div class="hr-val-input-wrap">
+                  <input type="number" id="hr-dist-t1" class="hr-num-input hr-sync-dist" value="85" min="10" max="500" step="5" />
+                  <span class="hr-unit">m</span>
+                </div>
+              </div>
+              <input type="range" id="hr-dist-range-t1" class="hr-slider hr-sync-range-dist" value="85" min="10" max="500" step="5" />
+            </div>
+
+            <!-- Input 2: Elevation -->
+            <div class="hr-input-group">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-elev-t1">Elevation:</label>
+                <div class="hr-val-input-wrap">
+                  <input type="number" id="hr-elev-t1" class="hr-num-input hr-sync-elev" value="3.4" min="0.5" max="25" step="0.1" />
+                  <span class="hr-unit">m</span>
+                </div>
+              </div>
+              <input type="range" id="hr-elev-range-t1" class="hr-slider hr-sync-range-elev" value="3.4" min="0.5" max="25" step="0.1" />
+            </div>
+
+            <!-- Input 3: Vulnerability level -->
+            <div class="hr-input-group hr-input-group-full">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-vuln-t1">Vulnerability level:</label>
+                <select id="hr-vuln-t1" class="hr-select hr-sync-vuln" aria-label="Household Vulnerability Level">
+                  <option value="LOW">LOW (Reinforced structure, elevated foundation)</option>
+                  <option value="MEDIUM" selected>MEDIUM (Standard masonry dwelling)</option>
+                  <option value="HIGH">HIGH (Single-story timber / vulnerable structure)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personalized Household Risk Outputs Display -->
+          <div class="hr-results-box">
+            <div class="hr-result-row">
+              <span class="hr-result-label">Flood Risk:</span>
+              <span class="hr-risk-value hr-sync-flood-risk tier-low">LOW</span>
+            </div>
+            <div class="hr-result-row highlight-row">
+              <span class="hr-result-label">Household Risk:</span>
+              <span class="hr-risk-value hr-sync-household-risk tier-medium">MEDIUM</span>
+            </div>
+          </div>
+          <div class="hr-sub-info hr-sync-breakdown">Model 2 Base: 48 | Elev: +12 | Dist: +10 | Vuln: 1.0x</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: SYNCHRONIZED HYDROLOGICAL CHARTS -->
+      <div class="console-tab-pane" id="tab-charts" role="tabpanel">
+        <div class="card-dock charts-card full-tab-card">
+          <div class="card-dock-header">
+            <span class="card-title">REAL-TIME HYDRO-METEOROLOGICAL TELEMETRY</span>
+            <span class="telemetry-live-badge">10 HZ LIVE</span>
+          </div>
+          <div class="charts-container">
+            <!-- Chart 1: Rainfall -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title">PRECIPITATION INTENSITY</span>
+                <span class="chart-current" id="chart-val-rain">12.0 mm/h</span>
+              </div>
+              <canvas id="canvas-chart-rain" class="chart-canvas" width="400" height="85"></canvas>
+            </div>
+
+            <!-- Chart 2: River Level -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title">RIVER WATER LEVEL & DANGER LIMITS</span>
+                <span class="chart-current" id="chart-val-river">1.82 m</span>
+              </div>
+              <canvas id="canvas-chart-river" class="chart-canvas" width="400" height="85"></canvas>
+            </div>
+
+            <!-- Chart 3: Water Level Rise Rate -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title">WATER LEVEL RISE RATE</span>
+                <span class="chart-current" id="chart-val-rise">+0.04 m/h</span>
+              </div>
+              <canvas id="canvas-chart-rise" class="chart-canvas" width="400" height="85"></canvas>
+            </div>
+
+            <!-- Chart 4: Risk Level -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title">FLOOD RISK LEVEL</span>
+                <span class="chart-current" id="chart-val-risk">LOW (14%)</span>
+              </div>
+              <canvas id="canvas-chart-risk" class="chart-canvas" width="400" height="85"></canvas>
+            </div>
+
+            <!-- Chart 5: Soil Saturation -->
+            <div class="chart-box">
+              <div class="chart-header">
+                <span class="chart-title">SOIL MOISTURE SATURATION</span>
+                <span class="chart-current" id="chart-val-soil">34.2%</span>
+              </div>
+              <canvas id="canvas-chart-soil" class="chart-canvas" width="400" height="85"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: HOUSEHOLDS VULNERABILITY MONITOR -->
+      <div class="console-tab-pane" id="tab-households" role="tabpanel">
+        <!-- HOUSEHOLD-LEVEL RISK MODULE (TAB 3 SYNCED) -->
+        <div class="card-dock household-risk-card" id="household-risk-module-tab3">
+          <div class="card-dock-header">
+            <span class="card-title">HOUSEHOLD-LEVEL RISK MODULE</span>
+            <span class="household-risk-badge-tag">INTERACTIVE CALCULATOR</span>
+          </div>
+
+          <!-- Household Inputs -->
+          <div class="hr-inputs-grid">
+            <!-- Input 1: Distance from river -->
+            <div class="hr-input-group">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-dist-t3">Distance from river:</label>
+                <div class="hr-val-input-wrap">
+                  <input type="number" id="hr-dist-t3" class="hr-num-input hr-sync-dist" value="85" min="10" max="500" step="5" />
+                  <span class="hr-unit">m</span>
+                </div>
+              </div>
+              <input type="range" id="hr-dist-range-t3" class="hr-slider hr-sync-range-dist" value="85" min="10" max="500" step="5" />
+            </div>
+
+            <!-- Input 2: Elevation -->
+            <div class="hr-input-group">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-elev-t3">Elevation:</label>
+                <div class="hr-val-input-wrap">
+                  <input type="number" id="hr-elev-t3" class="hr-num-input hr-sync-elev" value="3.4" min="0.5" max="25" step="0.1" />
+                  <span class="hr-unit">m</span>
+                </div>
+              </div>
+              <input type="range" id="hr-elev-range-t3" class="hr-slider hr-sync-range-elev" value="3.4" min="0.5" max="25" step="0.1" />
+            </div>
+
+            <!-- Input 3: Vulnerability level -->
+            <div class="hr-input-group hr-input-group-full">
+              <div class="hr-label-row">
+                <label class="hr-label" for="hr-vuln-t3">Vulnerability level:</label>
+                <select id="hr-vuln-t3" class="hr-select hr-sync-vuln" aria-label="Household Vulnerability Level">
+                  <option value="LOW">LOW (Reinforced structure, elevated foundation)</option>
+                  <option value="MEDIUM" selected>MEDIUM (Standard masonry dwelling)</option>
+                  <option value="HIGH">HIGH (Single-story timber / vulnerable structure)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personalized Household Risk Outputs Display -->
+          <div class="hr-results-box">
+            <div class="hr-result-row">
+              <span class="hr-result-label">Flood Risk:</span>
+              <span class="hr-risk-value hr-sync-flood-risk tier-low">LOW</span>
+            </div>
+            <div class="hr-result-row highlight-row">
+              <span class="hr-result-label">Household Risk:</span>
+              <span class="hr-risk-value hr-sync-household-risk tier-medium">MEDIUM</span>
+            </div>
+          </div>
+          <div class="hr-sub-info hr-sync-breakdown">Model 2 Base: 48 | Elev: +12 | Dist: +10 | Vuln: 1.0x</div>
+        </div>
+
+        <!-- 5 LOCALITIES LIST -->
+        <div class="card-dock households-card">
+          <div class="card-dock-header">
+            <span class="card-title">MONITORED LOCALITIES (5 PRESETS)</span>
+            <span class="household-count-tag">CLICK TO LOAD</span>
+          </div>
+          <p class="section-hint">Click any locality below to load its coordinates and vulnerability directly into the module.</p>
+          <div class="household-rows-list" id="household-rows-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: DATASET MODULE -->
+      <div class="console-tab-pane" id="tab-dataset" role="tabpanel">
+        <div class="card-dock dataset-card full-tab-card">
+          <!-- Card Header with Badges and Table Expander -->
+          <div class="card-dock-header">
+            <div class="ds-header-title-wrap">
+              <span class="card-title">DATASET MODULE</span>
+              <span id="ds-meta-type-badge" class="ds-badge ds-badge-prototype">SYNTHETIC PROTOTYPE</span>
+            </div>
+            <button id="btn-expand-ds-table" class="btn-micro" title="Expand first 20 rows table in full-width modal">⛶ EXPAND TABLE</button>
+          </div>
+
+          <!-- Dataset Name Banner -->
+          <div class="ds-name-banner">
+            <div class="ds-name-label">DATASET NAME:</div>
+            <div id="ds-meta-name" class="ds-name-value">Synthetic Prototype Dataset</div>
+          </div>
+
+          <!-- Summary Metrics: Rows, Columns, Missing Values -->
+          <div class="ds-stats-grid">
+            <div class="ds-stat-card">
+              <span class="stat-label">TOTAL ROWS</span>
+              <span id="ds-stat-rows" class="stat-num">5,000</span>
+            </div>
+            <div class="ds-stat-card">
+              <span class="stat-label">COLUMNS</span>
+              <span id="ds-stat-cols" class="stat-num">14</span>
+            </div>
+            <div class="ds-stat-card">
+              <span class="stat-label">MISSING VALUES</span>
+              <span id="ds-stat-missing" class="stat-num text-success">0</span>
+            </div>
+          </div>
+
+          <!-- Categories Distribution Section -->
+          <div class="ds-section-group">
+            <div class="ds-subgroup-title">FLOOD TYPE CATEGORIES:</div>
+            <div id="ds-flood-types-list" class="ds-categories-wrap">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="ds-section-group">
+            <div class="ds-subgroup-title">RISK CATEGORIES:</div>
+            <div id="ds-risk-cats-list" class="ds-categories-wrap">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Upload Real Dataset Section -->
+          <div class="ds-upload-section">
+            <div class="ds-upload-header">
+              <span class="ds-subgroup-title">UPLOAD REAL DATASET</span>
+              <button id="btn-reset-prototype" class="btn-micro ds-reset-btn" hidden title="Reset back to the 5,000-row prototype dataset">↺ RESET PROTOTYPE</button>
+            </div>
+            <input type="file" id="ds-file-input" accept=".csv" style="display: none;" />
+            <div id="ds-upload-dropzone" class="ds-dropzone" role="button" tabindex="0" title="Click or drag and drop a CSV file">
+              <svg class="ds-drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <div class="drop-text-primary">Upload Real Dataset (.CSV)</div>
+              <div class="drop-text-sub">Drag & drop your CSV file here, or click to browse</div>
+              <button id="btn-upload-dataset" class="btn-ctrl ds-btn-upload" type="button">SELECT CSV FILE</button>
+            </div>
+            <!-- Validation & Status Feedback Message -->
+            <div id="ds-validation-feedback" class="ds-validation-box validation-info">
+              Ready. Synthetic Prototype Dataset loaded.
+            </div>
+          </div>
+
+          <!-- Detected Column Names -->
+          <div class="ds-section-group">
+            <div class="ds-subgroup-title">DETECTED COLUMN NAMES (14):</div>
+            <div id="ds-column-chips" class="ds-columns-chip-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- First 20 Rows Table Preview -->
+          <div class="ds-table-section">
+            <div class="ds-table-header-row">
+              <span class="ds-subgroup-title">DATASET PREVIEW (FIRST 20 ROWS)</span>
+              <span id="ds-table-row-count" class="ds-row-count-tag">Showing 1–20 of 5,000 rows</span>
+            </div>
+            <div class="ds-table-scroll-wrap">
+              <table class="ds-table" id="ds-preview-table">
+                <thead id="ds-table-head"></thead>
+                <tbody id="ds-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- EXPANDED FULL-SCREEN DATASET TABLE MODAL -->
+  <div id="ds-table-modal" class="ds-modal" hidden>
+    <div class="ds-modal-backdrop"></div>
+    <div class="ds-modal-dialog">
+      <div class="ds-modal-header">
+        <div class="ds-modal-title-group">
+          <span class="ds-modal-icon">📊</span>
+          <h3 id="ds-modal-title" class="ds-modal-title">Dataset Preview — First 20 Rows</h3>
+        </div>
+        <button id="btn-close-ds-modal" class="ds-modal-close" title="Close preview">✕</button>
+      </div>
+      <div class="ds-modal-body">
+        <div class="ds-table-modal-scroll">
+          <table class="ds-table ds-modal-table">
+            <thead id="ds-modal-table-head"></thead>
+            <tbody id="ds-modal-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ds-modal-footer">
+        <span class="ds-modal-hint">Viewing first 20 records • Correlated synthetic flood features</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

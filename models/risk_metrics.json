@@ -1,0 +1,122 @@
+{
+  "accuracy": 98.1,
+  "precision": 98.11,
+  "recall": 98.1,
+  "f1_score": 98.1,
+  "confusion_matrix": [
+    [
+      147,
+      1,
+      0,
+      0
+    ],
+    [
+      3,
+      192,
+      2,
+      0
+    ],
+    [
+      0,
+      6,
+      228,
+      2
+    ],
+    [
+      0,
+      0,
+      5,
+      414
+    ]
+  ],
+  "confusion_labels": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "CRITICAL"
+  ],
+  "feature_importances": [
+    {
+      "feature": "water_level_m",
+      "importance": 32.6
+    },
+    {
+      "feature": "water_level_rise_rate_m_hr",
+      "importance": 16.46
+    },
+    {
+      "feature": "water_level_acceleration_m_hr2",
+      "importance": 12.99
+    },
+    {
+      "feature": "soil_moisture_percent",
+      "importance": 8.47
+    },
+    {
+      "feature": "saturation_index",
+      "importance": 6.91
+    },
+    {
+      "feature": "rainfall_mm",
+      "importance": 5.25
+    },
+    {
+      "feature": "rainfall_intensity_mm_hr",
+      "importance": 4.91
+    },
+    {
+      "feature": "distance_from_river_m",
+      "importance": 3.08
+    },
+    {
+      "feature": "elevation_m",
+      "importance": 2.72
+    },
+    {
+      "feature": "vulnerability_level_CRITICAL",
+      "importance": 1.91
+    },
+    {
+      "feature": "rainfall_duration_hr",
+      "importance": 1.39
+    },
+    {
+      "feature": "vulnerability_level_LOW",
+      "importance": 1.07
+    },
+    {
+      "feature": "flood_type_Sudden Upstream",
+      "importance": 0.64
+    },
+    {
+      "feature": "flood_type_Slow Saturation",
+      "importance": 0.56
+    },
+    {
+      "feature": "vulnerability_level_HIGH",
+      "importance": 0.41
+    },
+    {
+      "feature": "flood_type_Rapid-Rise",
+      "importance": 0.23
+    },
+    {
+      "feature": "flood_type_Cloudburst",
+      "importance": 0.21
+    },
+    {
+      "feature": "vulnerability_level_MEDIUM",
+      "importance": 0.21
+    }
+  ],
+  "total_samples": 5000,
+  "train_samples": 4000,
+  "test_samples": 1000,
+  "model_name": "RandomForestClassifier",
+  "classes": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "CRITICAL"
+  ]
+}

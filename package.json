@@ -1,0 +1,14 @@
+{
+  "name": "sensora-flood-simulation",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Sensora 2.0 - Animated Flood Simulation Digital Twin",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
